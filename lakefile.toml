@@ -1,0 +1,15 @@
+name = "demoProj2"
+version = "0.1.0"
+defaultTargets = ["demoproj2"]
+
+[[lean_lib]]
+name = "DemoProj2"
+
+[[lean_exe]]
+name = "demoproj2"
+root = "Main"
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4"
+rev = "v4.28.0" 
