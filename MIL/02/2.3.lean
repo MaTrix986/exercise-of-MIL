@@ -1,5 +1,9 @@
 import Mathlib.Data.Real.Basic
+import Mathlib.Analysis.SpecialFunctions.Log.Basic
+-- import Mathlib.Analysis.Complex.Exponential
+
 import Mathlib.Tactic
+import Mathlib.Util.Delaborators
 
 #check (le_refl)
 #check (le_trans)
@@ -17,6 +21,8 @@ example (x y z : ℝ) (h₀ : x ≤ y) (h₁ : y ≤ z) : x ≤ z :=
   le_trans h₀ h₁
 
 variable (a b c d e : ℝ)
+open Real -- necessary
+
 
 #check (le_refl : ∀ a, a ≤ a)
 #check (le_trans : a ≤ b → b ≤ c → a ≤ c)
@@ -41,4 +47,99 @@ example (h₀ : a ≤ b) (h₁ : b < c) (h₂ : c ≤ d) (h₃ : d < e) : a < e 
 example (h : 2 * a ≤ 3 * b) (h' : 1 ≤ a) (h'' : d = 2) : d + a ≤ 5 * b := by
   linarith
 
--- 'linarith'
+-- Use 'linarith' to auto-prove linear arithmetic problem
+
+#check (exp_le_exp : exp a ≤ exp b ↔ a ≤ b)
+
+example (h₀ : a ≤ b) (h₁ : c < d) : a + exp c + e < b + exp d + e := by
+  apply add_lt_add_of_lt_of_le
+  · apply add_lt_add_of_le_of_lt h₀
+    apply exp_lt_exp.mpr h₁
+  apply le_refl
+
+
+example (h₀ : d ≤ e) : c + exp (a + d) ≤ c + exp (a + e) := by
+  apply add_le_add_right
+  apply exp_le_exp.mpr
+  apply add_le_add_right
+  exact h₀
+
+example : (0 : ℝ) < 1 := by norm_num
+
+#check log_le_log
+
+example (h : a ≤ b) : log (1 + exp a) ≤ log (1 + exp b) := by
+  have h₀ : 0 < 1 + exp a := by
+    rw [← add_zero 0]
+    apply add_lt_add
+    . norm_num
+    . apply exp_pos
+  apply log_le_log h₀
+  apply add_le_add
+  . norm_num
+  . apply exp_le_exp.mpr h
+
+example : 0 ≤ a ^ 2 := by
+  -- apply?
+  exact sq_nonneg a
+
+example : 0 ≤ a ^ 2 := by
+  apply?
+
+
+
+example (h : a ≤ b) : c - exp b ≤ c - exp a := by
+  linarith [exp_le_exp.mpr h]
+
+example (h : a ≤ b) : c - exp b ≤ c - exp a := by
+  refine tsub_le_tsub_left ?_ c
+  apply exp_le_exp.mpr h
+
+example : 2 * a * b ≤ a ^ 2 + b ^ 2 := by
+  have h : 0 ≤ a ^ 2 - 2 * a * b + b ^ 2
+  calc
+    a ^ 2 - 2 * a * b + b ^ 2 = (a - b) ^ 2 := by ring
+    _ ≥ 0 := by apply pow_two_nonneg
+
+  calc
+    2 * a * b = 2 * a * b + 0 := by ring
+    _ ≤ 2 * a * b + (a ^ 2 - 2 * a * b + b ^ 2) := add_le_add (le_refl _) h
+    _ = a ^ 2 + b ^ 2 := by ring
+
+
+-- me made it so complex
+example : |a * b| ≤ (a ^ 2 + b ^ 2) / 2 := by
+  apply abs_le'.mpr
+  constructor
+  . have h : 0 ≤ a ^ 2 / 2  -  a * b + b ^ 2 / 2
+    calc
+      a ^ 2 / 2  -  a * b + b ^ 2 / 2 = (a - b) ^ 2 /2  := by ring
+      _ ≥ 0 := by linarith [pow_two_nonneg (a - b)]
+
+    calc
+      a * b = a * b + 0 := by ring
+      _ ≤ a * b + (a ^ 2 / 2  -  a * b + b ^ 2 / 2) := by
+        apply add_le_add
+        . apply le_refl
+        . apply h
+      _ = a ^ 2 / 2 + b ^ 2 / 2 := by ring
+
+    linarith
+
+  . have h : 0 ≤ a ^ 2 / 2  +  a * b + b ^ 2 / 2
+    calc
+      a ^ 2 / 2  +  a * b + b ^ 2 / 2 = (a + b) ^ 2 /2  := by ring
+      _ ≥ 0 := by linarith [pow_two_nonneg (a + b)]
+
+    calc
+      - (a * b) = - (a * b) + 0 := by ring
+      _ ≤ - (a * b) + (a ^ 2 / 2  +  a * b + b ^ 2 / 2) := by
+        apply add_le_add
+        . apply le_refl
+        . apply h
+      _ = a ^ 2 / 2 + b ^ 2 / 2 := by ring
+
+    linarith
+
+
+#check abs_le'.mpr
